@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang='zh-CN'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0, user-scalable=no'>
+    <title>星河入梦，满眼皆是你 ❤️</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+            font-family: '微软雅黑', 楷体, sans-serif;
+        }
+        /* 背景图片轮播容器样式 */
+        #bgSlider {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+        }
+        .bg-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.6);
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+        }
+        .bg-slide.active {
+            opacity: 0.6;
+        }
+
+        .photo-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        /* 放大版照片 - 新增点击激活样式 */
+        .photo-item {
+            position: absolute;
+            width: 28vw;
+            height: 16vh;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(255, 102, 153, 0.5);
+            pointer-events: auto;
+            z-index: 1;
+            opacity: 0;
+            transform: translateY(15px) rotate(0deg);
+            transition: all 1.5s cubic-bezier(0.2, 1, 0.3, 1);
+        }
+        .photo-item.show {
+            opacity: 0.88;
+            transform: translateY(0) rotate(var(--rotate-deg));
+        }
+        .photo-item:hover {
+            opacity: 1 !important;
+            transform: scale(1.15) rotate(0deg) !important;
+            box-shadow: 0 0 28px rgba(255, 102, 153, 0.9);
+            z-index: 2;
+            transition: all 0.5s ease;
+        }
+        /* 点击激活样式：略微放大+置顶 */
+        .photo-item.active {
+            opacity: 1 !important;
+            transform: scale(1.2) rotate(0deg) !important; /* 比hover略大一点，可调整scale值 */
+            box-shadow: 0 0 35px rgba(255, 102, 153, 1) !important;
+            z-index: 99 !important; /* 置顶显示 */
+            transition: all 0.3s ease !important;
+        }
+        /* 爱心飘落特效 - 不变 */
+        .petals {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+        .petal {
+            position: absolute;
+            font-size: 12px;
+            opacity: 0;
+            color: #ff99cc;
+            animation: petalFall linear infinite;
+        }
+        @keyframes petalFall {
+            0% { top: -10px; opacity: 1; transform: rotate(0deg); }
+            100% { top: 100vh; opacity: 0; transform: rotate(720deg); }
+        }
+        /* 底部浪漫文案 - 不变 */
+        .love-text {
+            position: absolute;
+			bottom: 10%;
+			left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            text-align: center;
+            padding: 0 20px;
+            z-index: 3;
+            text-shadow: 0 0 8px #ff6699;
+        }
+        .type-content {
+            font-size: 18px;
+            letter-spacing: 2px;
+            color: #ff2d7e;
+            margin-bottom: 10px;
+        }
+        .end-line {
+            font-size: 18px;
+            letter-spacing: 2px;
+            color: #ff2d7e;
+            margin-bottom: 20px;
+        }
+        /* 粉色祝福弹窗 - 不变 */
+        .blessing-box {
+            position: absolute;
+            padding: 8px 14px;
+            border-radius: 50px;
+            background: rgba(255, 102, 153, 0.85);
+            color: #fff;
+            font-size: 12px;
+            letter-spacing: 1px;
+            box-shadow: 0 0 10px #ff6699;
+            z-index: 99;
+            pointer-events: none;
+            opacity: 0;
+            animation: blessingAni 3s ease-in-out forwards;
+        }
+        @keyframes blessingAni {
+            0% { opacity: 0; transform: translateY(10px) scale(0.9); }
+            20% { opacity: 1; transform: translateY(0) scale(1); }
+            80% { opacity: 1; transform: translateY(-10px) scale(1); }
+            100% { opacity: 0; transform: translateY(-20px) scale(0.9); }
+        }
+        /* 音量开关按钮 - 优化点击区域和交互 */
+        .music-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: rgba(255, 102, 153, 0.9);
+            color: #ffffff;
+            text-align: center;
+            line-height: 46px;
+            cursor: pointer;
+            z-index: 9999;
+            box-shadow: 0 0 15px #ff6699;
+            font-size: 20px;
+            /* 优化点击区域，防止点击边缘无响应 */
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* 手机完美自适应 - 不变 */
+        @media (max-width: 768px) {
+            .type-content { font-size: 16px; }
+            .end-line { font-size: 20px; }
+            .photo-item { width: 50vw; height: 30vh; }
+            .photo-item.active { transform: scale(1.1) rotate(0deg) !important; } /* 移动端放大比例略小 */
+            .music-btn { width: 40px; height:40px; line-height:40px; font-size:18px; }
+        }
+        @media (max-width: 420px) {
+            .type-content { font-size: 14px; }
+            .end-line { font-size: 18px; }
+            .photo-item { width: 100vw; height: 50vh; }
+            .photo-item.active { transform: scale(1.05) rotate(0deg) !important; } /* 小屏放大比例更小 */
+            .music-btn { top:15px; right:15px; width: 36px; height:36px; line-height:36px; font-size:16px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景图片轮播容器 -->
+    <div id='bgSlider'>
+        <img class="bg-slide active" src="./bj/1.jpg" alt="背景1">
+        <img class="bg-slide" src="./bj/2.jpg" alt="背景2">
+        <img class="bg-slide" src="./bj/3.jpg" alt="背景3">
+        <img class="bg-slide" src="./bj/4.jpg" alt="背景4">
+        <img class="bg-slide" src="./bj/5.jpg" alt="背景5">
+        <img class="bg-slide" src="./bj/6.jpg" alt="背景6">
+        <img class="bg-slide" src="./bj/7.jpg" alt="背景7">
+        <img class="bg-slide" src="./bj/8.jpg" alt="背景8">
+        <img class="bg-slide" src="./bj/9.jpg" alt="背景9">
+        <img class="bg-slide" src="./bj/10.jpg" alt="背景10">
+        <img class="bg-slide" src="./bj/11.jpg" alt="背景11">
+        <img class="bg-slide" src="./bj/12.jpg" alt="背景12">
+		<img class="bg-slide" src="./bj/13.jpg" alt="背景13">
+        <img class="bg-slide" src="./bj/14.jpg" alt="背景14">
+        <img class="bg-slide" src="./bj/15.jpg" alt="背景15">
+        <img class="bg-slide" src="./bj/16.jpg" alt="背景16">
+        <img class="bg-slide" src="./bj/17.jpg" alt="背景17">
+        <img class="bg-slide" src="./bj/18.jpg" alt="背景18">
+        <img class="bg-slide" src="./bj/19.jpg" alt="背景19">
+        <img class="bg-slide" src="./bj/20.jpg" alt="背景20">
+        <img class="bg-slide" src="./bj/21.jpg" alt="背景21">
+        <img class="bg-slide" src="./bj/22.jpg" alt="背景22">
+        <img class="bg-slide" src="./bj/23.jpg" alt="背景23">
+        <img class="bg-slide" src="./bj/24.jpg" alt="背景24">
+        <img class="bg-slide" src="./bj/25.jpg" alt="背景25">
+    </div>
+
+    <!-- 本地MP3音乐 -->
+    <audio id='bgMusic' src='luori.mp3' loop='loop'></audio>
+
+    <!-- 音量开关按钮 默认显示🔇 音乐播放中 -->
+    <div class='music-btn' id='musicBtn'>🔇</div>
+
+    <div class='photo-bg' id='photoBg'></div>
+    <div class='petals' id='petals'></div>
+    <div class='love-text'>
+        <div class='type-content'>满目山河❤️人间理想</div>
+        <div class='end-line'>希望粥脱脱2026平安喜乐，新年快乐！ </div>
+    </div>
+
+    <script>
+        // ===================== 背景图片轮播配置 =====================
+        const bgSliderConfig = {
+			//轮播背景每张图片的展示时间，单位：毫秒
+            interval: 15000,
+            slideContainer: document.getElementById('bgSlider'),
+            slides: document.querySelectorAll('.bg-slide'),
+            currentIndex: 0
+        };
+
+        function changeBgSlide() {
+            bgSliderConfig.slides[bgSliderConfig.currentIndex].classList.remove('active');
+            bgSliderConfig.currentIndex = (bgSliderConfig.currentIndex + 1) % bgSliderConfig.slides.length;
+            bgSliderConfig.slides[bgSliderConfig.currentIndex].classList.add('active');
+        }
+        setInterval(changeBgSlide, bgSliderConfig.interval);
+
+        // ===================== 照片列表 =====================
+		const imgList = [
+            './img/1.jpg',
+            './img/2.jpg',
+            './img/3.jpg',
+            './img/4.jpg',
+            './img/5.jpg',
+            './img/6.jpg',
+            './img/7.jpg',
+            './img/8.jpg',
+            './img/9.jpg',
+            './img/10.jpg',
+            './img/11.jpg',
+            './img/12.jpg',
+            './img/13.jpg',
+            './img/14.jpg',
+            './img/15.jpg',
+            './img/16.jpg',
+            './img/17.jpg',
+            './img/18.jpg',
+            './img/19.jpg',
+            './img/20.jpg',
+            './img/21.jpg',
+            './img/22.jpg',
+            './img/23.jpg',
+            './img/24.jpg',
+            './img/25.jpg',
+            './img/26.jpg',
+            './img/27.jpg',
+            './img/28.jpg',
+            './img/29.jpg',
+            './img/30.jpg',
+            './img/31.jpg',
+            './img/32.jpg',
+            './img/33.jpg',
+            './img/34.jpg',
+            './img/35.jpg',
+            './img/36.jpg',
+            './img/37.jpg',
+            './img/38.jpg',
+            './img/39.jpg',
+            './img/40.jpg',
+            './img/41.jpg'
+        ];
+        
+        // ===================== 祝福语列表 =====================
+        const blessings = [ 
+			'平安喜乐',
+			'万事顺意',
+			'岁岁常欢愉，年年皆胜意',
+			'日子滚烫，万事胜意',
+			'日日是好日，事事皆顺心',
+			'想念',
+			'心有暖阳，万事晴朗',
+			'日子温柔',
+			'累了就干点麻将🤭',
+			'点我干嘛',
+			'仙女上线啦😊',
+			'美好的一天别忘了微笑呀😀',
+			'愿事事顺心',
+			'好运如期而至',
+			'全力以赴，满载而归',
+			'喜乐伴你同行',
+			'今日宜麻将😄',
+			'工作顺利，事事顺心',
+			'心有暖阳不负韶华',
+			'生活满是甜意',
+			'生活明朗万物可爱',
+			'今日有小幸运',
+			'人间烟火，岁岁年年'
+		];
+
+        // ===================== 配置项 =====================
+        const config = {
+            maxNum: 20,          
+            addSpeed: 1600,      
+            rotateMin: -20,      
+            rotateMax: 20,       
+            findEmptyTimes: 8    
+        };
+
+        const photoBox = document.getElementById('photoBg');
+        const winW = window.innerWidth;
+        const winH = window.innerHeight;
+        let photoCache = [];
+        let photoDomArr = [];
+
+        // 图片预加载
+        function preloadImages(imgArr) {
+            imgArr.forEach(src => {
+                const img = new Image();
+                img.onload = function() {
+                    photoCache.push(this);
+                };
+                img.onerror = function() {};
+                img.src = src;
+            });
+        }
+
+        // 智能防重叠找位置
+        function getNoOverlapPos(w, h) {
+            let targetX, targetY;
+            for(let i=0; i<config.findEmptyTimes; i++) {
+				targetX = Math.floor(Math.random() * (winW * 0.75 - w)) + winW * 0.1;
+				targetY = Math.floor(Math.random() * ( winH * 0.7 - h ));
+                let isOverlap = false;
+                photoDomArr.forEach(item => {
+                    const rect = item.getBoundingClientRect();
+                    if(targetX + w > rect.left && targetX < rect.right && targetY + h > rect.top && targetY < rect.bottom) {
+                        isOverlap = true;
+                    }
+                });
+                if(!isOverlap) break;
+            }
+            return {x: targetX, y: targetY};
+        }
+
+        // ===================== 点击图片显示祝福语 + 照片放大置顶 =====================
+        function showBlessing(e) {
+            // 阻止事件冒泡和默认行为，避免重复触发
+            e.stopPropagation();
+            e.preventDefault();
+            
+            // 只处理一次事件（解决手机端touch和click同时触发的问题）
+            if (e.type === 'touchstart') {
+                e.target.dataset.touched = 'true';
+                setTimeout(() => {
+                    delete e.target.dataset.touched;
+                }, 1000);
+            } else if (e.type === 'click' && e.target.dataset.touched) {
+                return;
+            }
+            
+            // 1. 移除其他照片的active样式（确保只有当前点击的照片置顶）
+            photoDomArr.forEach(item => {
+                if (item !== e.target) {
+                    item.classList.remove('active');
+                }
+            });
+
+            // 2. 给当前点击的照片添加active样式（放大置顶）
+            const photo = e.target;
+            if (photo.classList.contains('active')) {
+                photo.classList.remove('active'); // 再次点击取消放大
+            } else {
+                photo.classList.add('active');
+            }
+            
+            // 3. 显示祝福语弹窗
+            const clickX = e.clientX || (e.changedTouches && e.changedTouches[0].clientX) || 0;
+            const clickY = e.clientY || (e.changedTouches && e.changedTouches[0].clientY) || 0;
+            const randomBlessing = blessings[Math.floor(Math.random() * blessings.length)];
+            const box = document.createElement('div');
+            box.className = 'blessing-box';
+            box.innerHTML = randomBlessing;
+            const offsetX = Math.random() * 40 - 20;
+            const offsetY = Math.random() * 40 - 20;
+            box.style.left = `${clickX + offsetX}px`;
+            box.style.top = `${clickY + offsetY}px`;
+            document.body.appendChild(box);
+            setTimeout(() => box.remove(), 3000);
+        }
+
+        // 创建放大版照片（绑定点击放大+祝福语事件）
+        function createPhoto() {
+            if(photoCache.length === 0) return;
+            const randomImg = photoCache[Math.floor(Math.random() * photoCache.length)];
+            const photo = document.createElement('img');
+            photo.src = randomImg.src;
+            photo.className = 'photo-item';
+            photo.style.width = '28vw';
+            photo.style.height = '16vh';
+
+            const pos = getNoOverlapPos(photo.offsetWidth, photo.offsetHeight);
+            photo.style.left = pos.x + 'px';
+            photo.style.top = pos.y + 'px';
+
+            const randomDeg = Math.floor(Math.random()*(config.rotateMax-config.rotateMin)+1) + config.rotateMin;
+            photo.style.setProperty('--rotate-deg', `${randomDeg}deg`);
+
+            // 绑定事件，优化移动端响应
+            photo.addEventListener('touchstart', showBlessing, { passive: false });
+            photo.addEventListener('click', showBlessing);
+
+            photoBox.appendChild(photo);
+            photoDomArr.push(photo);
+            setTimeout(() => {
+                photo.classList.add('show');
+            }, 80);
+
+            if(photoDomArr.length > config.maxNum) {
+                const delItem = photoDomArr.shift();
+                // 移除事件监听避免内存泄漏
+                delItem.removeEventListener('click', showBlessing);
+                delItem.removeEventListener('touchstart', showBlessing);
+                delItem.style.opacity = 0;
+                delItem.style.transform = 'translateY(10px) rotate(0deg)';
+                setTimeout(() => {
+                    delItem.remove();
+                }, 1000);
+            }
+        }
+
+        preloadImages(imgList);
+        setInterval(createPhoto, config.addSpeed);
+
+		// ✅ 爱心+玫瑰 随机打散飘落特效 (替换你原来的这段即可)
+		const petals = document.getElementById('petals');                                   
+		setInterval(() => {                                                                 
+			const petal = document.createElement('div');                                    
+			petal.className = 'petal';                                                      
+			// ✅ 1. 随机抽取表情：爱心/玫瑰 二选一 打散显示
+			const iconList = ['🌹','🎇','❄'];
+			const randomIcon = iconList[Math.floor(Math.random() * iconList.length)];
+			petal.innerHTML = randomIcon;
+		
+			// ✅ 2. 随机大小：8px~20px 大小不一，更有层次感
+			const randomSize = Math.random() * 12 + 8;
+			petal.style.fontSize = `${randomSize}px`;
+		
+			// ✅ 3. 随机颜色深浅：粉色/玫红 渐变，更梦幻
+			const randomOpacity = Math.random() * 0.5 + 0.5;
+			petal.style.opacity = randomOpacity;
+			petal.style.color = Math.random()>0.5 ? '#ff2d7e' : '#ff99cc';
+		
+			// ✅ 4. 随机水平位置 + 随机飘落速度
+			petal.style.left = `${Math.random() * winW}px`;                                 
+			petal.style.animationDuration = `${Math.random() * 15 + 10}s`;
+		
+			petals.appendChild(petal);                                                      
+			setTimeout(() => petal.remove(), 20000);                                         
+		}, 800); // 200毫秒生成一个，飘落密度更高，可改300/400减小密度
+
+        // ===================== 音乐播放逻辑（核心修复）=====================
+		const bgMusic = document.getElementById('bgMusic');
+		const musicBtn = document.getElementById('musicBtn');
+		let isPlay = false;
+
+        // 初始化音乐状态检测
+        bgMusic.addEventListener('playing', () => {
+            isPlay = true;
+            musicBtn.innerHTML = '🔊';
+        });
+        bgMusic.addEventListener('pause', () => {
+            isPlay = false;
+            musicBtn.innerHTML = '🔇';
+        });
+        bgMusic.addEventListener('error', (err) => {
+            console.error('音乐加载失败:', err);
+            musicBtn.innerHTML = '🔈'; // 标记错误状态
+        });
+		
+		// 页面加载后尝试自动播放
+		window.addEventListener('load', async () => {
+			try {
+                await bgMusic.play();
+                isPlay = true;
+                musicBtn.innerHTML = '🔊';
+            } catch (err) {
+                console.log('自动播放失败，等待用户交互:', err);
+                // 绑定一次交互事件触发播放
+                const triggerPlay = async (e) => {
+                    e.stopPropagation();
+                    await bgMusic.play().catch(err => console.log('用户交互播放失败:', err));
+                    document.body.removeEventListener('click', triggerPlay);
+                    document.body.removeEventListener('touchstart', triggerPlay);
+                };
+                document.body.addEventListener('click', triggerPlay, { once: true });
+                document.body.addEventListener('touchstart', triggerPlay, { once: true, passive: true });
+            }
+		});
+
+        // 优化音乐按钮点击事件（核心修复）
+        function toggleMusic(e) {
+            // 阻止事件冒泡和默认行为，确保优先响应
+            e.stopPropagation();
+            e.preventDefault();
+
+            // 强制同步状态，避免异步导致的无响应
+            if(isPlay){
+                bgMusic.pause();
+                isPlay = false;
+                musicBtn.innerHTML = '🔇';
+            }else{
+                // 主动播放并处理异常
+                bgMusic.play().then(() => {
+                    isPlay = true;
+                    musicBtn.innerHTML = '🔊';
+                }).catch(err => {
+                    console.error('播放失败:', err);
+                    // 兜底：再次尝试绑定用户交互
+                    const retryPlay = () => {
+                        bgMusic.play();
+                        musicBtn.removeEventListener('click', retryPlay);
+                        musicBtn.removeEventListener('touchstart', retryPlay);
+                    };
+                    musicBtn.addEventListener('click', retryPlay, { once: true });
+                    musicBtn.addEventListener('touchstart', retryPlay, { once: true });
+                });
+            }
+        }
+
+        // 只绑定一次click事件（移动端touch会自动转为click），避免重复绑定
+        musicBtn.addEventListener('click', toggleMusic, { passive: false });
+        // 移动端额外绑定touchstart，提升响应速度
+        musicBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // 阻止默认行为，避免触发两次
+            toggleMusic(e);
+        }, { passive: false });
+
+        // 手机滑动切换背景图
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        document.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, { passive: true });
+
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            if (touchEndX - touchStartX > swipeThreshold) {
+                bgSliderConfig.slides[bgSliderConfig.currentIndex].classList.remove('active');
+                bgSliderConfig.currentIndex = (bgSliderConfig.currentIndex - 1 + bgSliderConfig.slides.length) % bgSliderConfig.slides.length;
+                bgSliderConfig.slides[bgSliderConfig.currentIndex].classList.add('active');
+            } else if (touchEndX - touchStartX < -swipeThreshold) {
+                changeBgSlide();
+            }
+        }
+
+        window.addEventListener('resize', () => location.reload());
+    </script>
+</body>
+</html>
